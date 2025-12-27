@@ -1,20 +1,20 @@
 import io
 import sys
 
-module_template = r"""
+module_start = r"""
 (module
   (func (export "main") (result i32)
-{instrs}
+""".lstrip()
+
+module_end = r"""
   )
 )
-""".lstrip()
+"""
 
 
 def compile_stdin(Compiler: type) -> None:
     src = "".join(line.rstrip() for line in sys.stdin)
-    output = io.StringIO()
-    compiler = Compiler(src, output=output)
+    print(module_start)
+    compiler = Compiler(src)
     compiler.expression()
-    instrs = output.getvalue()
-    full_code = module_template.format(instrs=instrs)
-    print(full_code)
+    print(module_end)

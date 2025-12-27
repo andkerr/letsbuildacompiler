@@ -48,6 +48,9 @@ class Compiler:
     def is_addop(self, c: str) -> bool:
         return c in ("+", "-")
 
+    def is_mulop(self, c: str) -> bool:
+        return c in ("*", "/")
+
     def emit(self, s: str):
         self.output.write("    " + s)
 
@@ -60,8 +63,7 @@ class Compiler:
             self.expression()
             self.match(")")
         else:
-            s = self.get_num()
-            self.emit_ln(f"i32.const {s}")
+            self.emit_ln(f"i32.const {self.get_num()}")
 
     def multiply(self):
         self.match("*")
@@ -75,7 +77,7 @@ class Compiler:
 
     def term(self):
         self.factor()
-        while self.look in ("*", "/"):
+        while self.is_mulop(self.look):
             if self.look == "*":
                 self.multiply()
             elif self.look == "/":
@@ -92,9 +94,7 @@ class Compiler:
         self.emit_ln("i32.sub")
 
     def expression(self):
-        # For handling unary + and - operators, emit a zero first and then
-        # proceed as usual.
-        if self.is_addop(self.look):
+        if self.is_addop(self.look): # handle unary +,-
             self.emit_ln("i32.const 0")
         else:
             self.term()
@@ -103,3 +103,7 @@ class Compiler:
                 self.add()
             elif self.look == "-":
                 self.subtract()
+
+if __name__ == "__main__":
+    import myutils
+    myutils.compile_stdin(Compiler)
