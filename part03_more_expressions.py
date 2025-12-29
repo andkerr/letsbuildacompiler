@@ -11,7 +11,6 @@ class Compiler:
 
         # 'Init' from the tutorial: prime the parser by calling get_char.
         self.get_char()
-        self.skip_white()
 
     def get_char(self):
         if self.pos < len(self.src):
@@ -26,39 +25,31 @@ class Compiler:
     def expected(self, s: str):
         self.abort(f"{s} expected")
 
-    def skip_white(self):
-        while self.look.isspace():
-            self.get_char()
-
     def match(self, x: str):
         if self.look == x:
             self.get_char()
-            self.skip_white()
         else:
             self.expected(f"'{x}'")
 
     def get_name(self) -> str:
         if not self.look.isalpha():
             self.expected("Name")
-        name = ""
-        while self.look.isalnum():
-            name += self.look.upper()
-            self.get_char()
-        self.skip_white()
+        name = self.look.upper()
+        self.get_char()
         return name
 
     def get_num(self) -> str:
         if not self.look.isdigit():
             self.expected("Integer")
-        num = ""
-        while self.look.isdigit():
-            num += self.look
-            self.get_char()
-        self.skip_white()
+        num = self.look
+        self.get_char()
         return num
 
     def is_addop(self, c: str) -> bool:
         return c in ("+", "-")
+
+    def is_mulop(self, c: str) -> bool:
+        return c in ("*", "/")
 
     def emit(self, s: str):
         self.output.write("    " + s)
@@ -66,25 +57,13 @@ class Compiler:
     def emit_ln(self, s: str):
         self.emit(s + "\n")
 
-    def ident(self):
-        name = self.get_name()
-        if self.look == "(":
-            self.match("(")
-            self.match(")")
-            self.emit_ln(f"call ${name}")
-        else:
-            self.emit_ln(f"local.get ${name}")
-
     def factor(self):
         if self.look == "(":
             self.match("(")
             self.expression()
             self.match(")")
-        elif self.look.isalpha():
-            self.ident()
         else:
-            s = self.get_num()
-            self.emit_ln(f"i32.const {s}")
+            self.emit_ln(f"i32.const {self.get_num()}")
 
     def multiply(self):
         self.match("*")
@@ -98,7 +77,7 @@ class Compiler:
 
     def term(self):
         self.factor()
-        while self.look in ("*", "/"):
+        while self.is_mulop(self.look):
             if self.look == "*":
                 self.multiply()
             elif self.look == "/":
@@ -115,9 +94,7 @@ class Compiler:
         self.emit_ln("i32.sub")
 
     def expression(self):
-        # For handling unary + and - operators, emit a zero first and then
-        # proceed as usual.
-        if self.is_addop(self.look):
+        if self.is_addop(self.look): # handle unary +,-
             self.emit_ln("i32.const 0")
         else:
             self.term()
@@ -127,9 +104,6 @@ class Compiler:
             elif self.look == "-":
                 self.subtract()
 
-    def assignment(self):
-        name = self.get_name()
-        self.match("=")
-        self.emit_ln(f"(local ${name} i32)")
-        self.expression()
-        self.emit_ln(f"local.set ${name}")
+if __name__ == "__main__":
+    import myutils
+    myutils.compile_stdin(Compiler)
