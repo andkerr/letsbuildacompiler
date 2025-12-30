@@ -55,77 +55,29 @@ class Interpreter:
         self.skip_white()
         return name
 
-    def get_num(self) -> str:
-        if not self.look.isdigit():
-            self.expected("Integer")
-        num = ""
-        while self.look.isdigit():
-            num += self.look
-            self.get_char()
-        self.skip_white()
-        return num
+    def get_num(self) -> int:
+        pass
 
     def is_addop(self, c: str) -> bool:
         return c in ("+", "-")
 
+    def is_mulop(self, c: str) -> bool:
+        return c in ("*", "/")
+
     def ident(self):
-        name = self.get_name()
-        return self.table.get(name, 0)
+        pass
 
     def factor(self) -> int:
-        result = 0
-        if self.look == "(":
-            self.match("(")
-            result = self.expression()
-            self.match(")")
-        elif self.look.isalpha():
-            result = self.ident()
-        else:
-            result = int(self.get_num())
-        return result
+        pass
 
     def term(self) -> int:
-        result = self.factor()
-        while self.look in ("*", "/"):
-            if self.look == "*":
-                self.match("*")
-                result *= self.factor()
-            elif self.look == "/":
-                self.match("/")
-                result //= self.factor()
-        return result
+        pass
 
     def expression(self) -> int:
-        # Handling unary operators
-        result = 0
-        if not self.is_addop(self.look):
-            result = self.term()
-
-        while self.is_addop(self.look):
-            if self.look == "+":
-                self.match("+")
-                result += self.term()
-            elif self.look == "-":
-                self.match("-")
-                result -= self.term()
-        return result
+        pass
 
     def assignment(self):
-        name = self.get_name()
-        self.match("=")
-        self.table[name] = self.expression()
+        pass
 
     def interpret(self):
-        while self.look != ".":
-            match self.look:
-                case "?":
-                    self.match("?")
-                    name = self.get_name()
-                    self.table[name] = int(self.input.readline().strip())
-                case "!":
-                    self.match("!")
-                    name = self.get_name()
-                    self.output.write(f"{self.table.get(name, 0)}\n")
-                case _:
-                    self.assignment()
-            self.skip_white()
+        pass
