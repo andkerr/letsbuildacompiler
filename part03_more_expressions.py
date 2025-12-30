@@ -11,6 +11,7 @@ class Compiler:
 
         # 'Init' from the tutorial: prime the parser by calling get_char.
         self.get_char()
+        self.skip_white()
 
     def get_char(self):
         if self.pos < len(self.src):
@@ -18,6 +19,13 @@ class Compiler:
             self.pos += 1
         else:
             self.look = ""  # End of input
+
+    def is_whitespace(self, c: str) -> bool:
+        return c in (" ", "\t")
+
+    def skip_white(self):
+        while self.is_whitespace(self.look):
+            self.get_char()
 
     def abort(self, msg: str):
         raise Exception(f"Error: {msg}")
@@ -28,22 +36,29 @@ class Compiler:
     def match(self, x: str):
         if self.look == x:
             self.get_char()
+            self.skip_white()
         else:
             self.expected(f"'{x}'")
 
     def get_name(self) -> str:
+        token = ""
         if not self.look.isalpha():
             self.expected("Name")
-        name = self.look.upper()
-        self.get_char()
-        return name
+        while self.look.isalnum():
+            token += self.look.upper()
+            self.get_char()
+        self.skip_white()
+        return token
 
     def get_num(self) -> str:
+        value = ""
         if not self.look.isdigit():
             self.expected("Integer")
-        num = self.look
-        self.get_char()
-        return num
+        while self.look.isdigit():
+            value += self.look
+            self.get_char()
+        self.skip_white()
+        return value
 
     def is_addop(self, c: str) -> bool:
         return c in ("+", "-")
@@ -57,11 +72,29 @@ class Compiler:
     def emit_ln(self, s: str):
         self.emit(s + "\n")
 
+    def ident(self):
+        name = self.get_name()
+        if self.look == "(":
+            self.match("(")
+            self.match(")")
+            self.emit_ln(f"call ${name}")
+        else:
+            self.emit_ln(f"local.get ${name}")
+
+    def assignment(self):
+        name = self.get_name()
+        self.match("=")
+        self.emit_ln(f"(local ${name} i32)")
+        self._expression()
+        self.emit_ln(f"local.set ${name}")
+
     def factor(self):
         if self.look == "(":
             self.match("(")
-            self.expression()
+            self._expression()
             self.match(")")
+        elif self.look.isalpha():
+            self.ident()
         else:
             self.emit_ln(f"i32.const {self.get_num()}")
 
@@ -93,7 +126,7 @@ class Compiler:
         self.term()
         self.emit_ln("i32.sub")
 
-    def expression(self):
+    def _expression(self):
         if self.is_addop(self.look): # handle unary +,-
             self.emit_ln("i32.const 0")
         else:
@@ -103,6 +136,12 @@ class Compiler:
                 self.add()
             elif self.look == "-":
                 self.subtract()
+
+    def expression(self):
+        self._expression()
+        if self.look not in ("\n", ""):
+            self.expected("EOF or newline")
+
 
 if __name__ == "__main__":
     import myutils
