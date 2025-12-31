@@ -11,6 +11,9 @@ module_end = r"""
 )
 """
 
+def slurp_stdin() -> str:
+    return "\n".join(line.strip() for line in sys.stdin)
+
 
 def compile_stdin(Compiler: type) -> None:
     src = "".join(line.rstrip() for line in sys.stdin)
