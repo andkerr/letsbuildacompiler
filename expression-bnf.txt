@@ -1,0 +1,18 @@
+# a (math) expression is a sum of terms (with an optional leading
+# unary plus or minus)
+expression ::= <addop> <term> [ <addop> <term> ]*
+
+# a term is a product of factors
+term ::= <factor> [ <mulop> <factor> ]*
+
+# factor can be a number, variable, or another expression in parentheses
+factor ::= <number> | <variable> | "(" <expression> ")"
+
+# a number is one or more (decimal) digits
+number ::= <digit>+
+
+variable ::= <digit> [ <alnum> ]*
+
+addop ::= "+" | "-"
+
+mulop ::= "*" | "/"

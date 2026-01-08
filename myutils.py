@@ -15,9 +15,9 @@ def slurp_stdin() -> str:
     return "\n".join(line.strip() for line in sys.stdin)
 
 
-def compile_stdin(Compiler: type) -> None:
+def compile_stdin(Compiler: type, do_prog = lambda c: c.expression()) -> None:
     src = "".join(line.rstrip() for line in sys.stdin)
     print(module_start)
     compiler = Compiler(src)
-    compiler.expression()
+    do_prog(compiler)
     print(module_end)

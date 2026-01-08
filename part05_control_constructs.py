@@ -63,159 +63,48 @@ class Compiler:
         self.emit(s + "\n")
 
     def generate_loop_labels(self) -> dict[str, str]:
-        self.loopcount += 1
-        return {
-            "loop": f"$loop{self.loopcount}",
-            "break": f"$breakloop{self.loopcount}",
-            "var": f"$loopvar{self.loopcount}",
-            "limit": f"$looplimit{self.loopcount}",
-        }
+        pass
 
     def condition(self):
-        self.emit_ln("<condition>")
+        pass
 
     def expression(self):
-        self.emit_ln("<expression>")
+        pass
 
     def other(self):
         self.emit_ln(self.get_name())
 
     def block(self, breakloop_label: str = ""):
-        # breakloop_label is used for emitting break statements inside loops.
-        while self.look not in ("e", "l", "u", ""):
-            match self.look:
-                case "i":
-                    self.do_if(breakloop_label)
-                case "w":
-                    self.do_while()
-                case "p":
-                    self.do_loop()
-                case "r":
-                    self.do_repeat()
-                case "d":
-                    self.do_do()
-                case "f":
-                    self.do_for()
-                case "b":
-                    self.do_break(breakloop_label)
-                case _:
-                    self.other()
+        while self.look != "e":
+            self.other()
 
     def do_if(self, breakloop_label: str = ""):
-        self.match("i")
-        self.condition()
-        self.emit_ln("if")
-        self.block(breakloop_label)
-        if self.look == "l":
-            self.match("l")
-            self.emit_ln("else")
-            self.block(breakloop_label)
-        self.match("e")
-        self.emit_ln("end")
+        pass
 
     def do_while(self):
-        self.match("w")
-        labels = self.generate_loop_labels()
-        self.emit_ln(f"loop {labels['loop']}")
-        self.emit_ln(f"block {labels['break']}")
-        self.condition()
-        # For a while loop the break condition is the inverse of the loop
-        # condition.
-        self.emit_ln("i32.eqz")
-        self.emit_ln(f"br_if {labels['break']}")
-        self.block(labels["break"])
-        self.emit_ln(f"br {labels['loop']}")
-        self.match("e")
-        self.emit_ln("end")  # end block
-        self.emit_ln("end")  # end loop
+        pass
 
     def do_loop(self):
-        self.match("p")
-        labels = self.generate_loop_labels()
-        self.emit_ln(f"loop {labels['loop']}")
-        self.emit_ln(f"block {labels['break']}")
-        self.block(labels["break"])
-        self.emit_ln(f"br {labels['loop']}")
-        self.match("e")
-        self.emit_ln("end")  # end block
-        self.emit_ln("end")  # end loop
+        pass
 
     def do_repeat(self):
-        self.match("r")
-        labels = self.generate_loop_labels()
-        self.emit_ln(f"loop {labels['loop']}")
-        self.emit_ln(f"block {labels['break']}")
-        self.block(labels["break"])
-        self.match("u")
-        self.condition()
-        # The 'until' condition dictates when to break, so we just branch back
-        # to the loop if the condition is false.
-        self.emit_ln("i32.eqz")
-        self.emit_ln(f"br_if {labels['loop']}")
-        self.emit_ln("end")  # end block
-        self.emit_ln("end")  # end loop
+        pass
 
     def do_do(self):
-        self.match("d")
-        self.expression()
-        labels = self.generate_loop_labels()
-
-        # The loopvar starts with the value of the expression.
-        self.emit_ln(f"local.set {labels['var']}")
-        self.emit_ln(f"loop {labels['loop']}")
-        self.emit_ln(f"block {labels['break']}")
-        self.emit_ln(f"local.get {labels['var']}")
-        self.emit_ln("i32.const 1")
-        self.emit_ln("i32.sub")
-        self.emit_ln(f"local.set {labels['var']}")
-        self.block(labels["break"])
-        self.match("e")
-        self.emit_ln(f"local.get {labels['var']}")
-        self.emit_ln("i32.const 0")
-        self.emit_ln("i32.gt_s")
-        self.emit_ln(f"br_if {labels['loop']}")
-        self.emit_ln("end")  # end block
-        self.emit_ln("end")  # end loop
+        pass
 
     def do_for(self):
-        self.match("f")
-        labels = self.generate_loop_labels()
-        self.get_name()  # loop variable name, ignored here
-        self.match("=")
-
-        # Loop var starts with initial_value - 1, per the tutorial (because
-        # we increment it on each iteration before checking against the limit).
-        self.expression()
-        self.emit_ln("i32.const 1")
-        self.emit_ln("i32.sub")
-        self.emit_ln(f"local.set {labels['var']}")
-        # NOTE: the original tutorial doesn't match "TO" here, so we won't
-        # either.
-
-        # Upper limit: compute expression once, save its value in the loop limit
-        # variable.
-        self.expression()
-        self.emit_ln(f"local.set {labels['limit']}")
-        self.emit_ln(f"loop {labels['loop']}")
-        self.emit_ln(f"block {labels['break']}")
-
-        # Fetch the loop variable, increment it and compare to the limit.
-        self.emit_ln(f"local.get {labels['var']}")
-        self.emit_ln("i32.const 1")
-        self.emit_ln("i32.add")
-        self.emit_ln(f"local.tee {labels['var']}")
-        self.emit_ln(f"local.get {labels['limit']}")
-        self.emit_ln("i32.ge_s")
-        self.emit_ln(f"br_if {labels['break']}")
-
-        self.block(labels["break"])
-        self.emit_ln(f"br {labels['loop']}")
-        self.match("e")
-        self.emit_ln("end")  # end block
-        self.emit_ln("end")  # end loop
+        pass
 
     def do_break(self, breakloop_label: str):
-        if breakloop_label == "":
-            self.abort("No loop to break from")
-        self.match("b")
-        self.emit_ln(f"br {breakloop_label}")
+        pass
+
+    def do_program(self):
+        self.block()
+        if self.look != "e":
+            self.expected("End")
+        self.emit_ln("nop")
+
+if __name__ == "__main__":
+    import myutils
+    myutils.compile_stdin(Compiler, lambda c: c.do_program())
